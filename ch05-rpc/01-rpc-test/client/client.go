@@ -25,6 +25,6 @@ func main() {
 	fmt.Println(*stringReq, reply)
 	// 异步调用
 	call := client.Go("StringService.Diff", stringReq, &reply, nil)
-	_ = <-call.Done
+	fmt.Println(<-call.Done)
 	fmt.Println(*stringReq, reply)
 }
