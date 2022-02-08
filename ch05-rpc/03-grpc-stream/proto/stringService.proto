@@ -1,0 +1,19 @@
+syntax = "proto3";
+option go_package = "./;proto";
+
+service StringService {
+  rpc Concat(StringRequest) returns (StringResponse);
+  rpc LotsServerStream(StringRequest) returns (stream StringResponse);
+  rpc LotsClientStream(stream StringRequest) returns (StringResponse);
+  rpc LotsAllStream(stream StringRequest) returns (stream StringResponse);
+}
+
+message StringRequest {
+  string A = 1;
+  string B = 2;
+}
+
+message StringResponse {
+  string result = 1;
+  string err = 2;
+}
