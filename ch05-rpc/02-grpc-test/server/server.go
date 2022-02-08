@@ -4,17 +4,43 @@ import (
 	"Go-/ch05-rpc/02-grpc-test/proto"
 	"context"
 	"errors"
+	"fmt"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	"net"
 	"strings"
 )
 
 func main() {
+	interceptor := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+		fmt.Println("拦截到一个请求")
+		md, ok := metadata.FromIncomingContext(ctx)
+		if !ok {
+			return resp, status.Error(codes.Unauthenticated, "token无效")
+		}
+		var (
+			appid string
+			password string
+		)
+		if va1, ok := md["appid"]; ok{
+			appid = va1[0]
+		}
+		if va1, ok := md["password"]; ok{
+			password = va1[0]
+		}
+		if appid != "10086" || password != "123456" {
+			return resp, status.Error(codes.Unauthenticated, "token无效")
+		}
+		fmt.Println("请求成功")
+		return handler(ctx, req)}
+	opt := []grpc.ServerOption{grpc.UnaryInterceptor(interceptor)}
 	l, err := net.Listen("tcp", "127.0.0.1:1234")
 	if err != nil {
 		panic(err)
 	}
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(opt...)
 	stringService := new(StringService)
 	proto.RegisterStringServiceServer(grpcServer, stringService)
 	if err = grpcServer.Serve(l); err != nil {

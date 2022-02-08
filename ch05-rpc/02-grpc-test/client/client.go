@@ -5,11 +5,24 @@ import (
 	"context"
 	"fmt"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
+	"time"
 )
 
 func main() {
+	interceptor := func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		start := time.Now()
+		md := metadata.New(map[string]string{
+			"appid": "10086",
+			"password": "123456",
+		})
+		ctx = metadata.NewOutgoingContext(context.Background(), md)
+		err := invoker(ctx, method, req, reply, cc, opts...)
+		fmt.Printf("耗时: %s\n", time.Since(start))
+		return err
+	}
 	serviceAddress := "127.0.0.1:1234"
-	conn, err := grpc.Dial(serviceAddress, grpc.WithInsecure())
+	conn, err := grpc.Dial(serviceAddress, grpc.WithInsecure(), grpc.WithUnaryInterceptor(interceptor))
 	if err != nil {
 		panic(err)
 	}
